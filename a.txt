@@ -1,165 +1,66 @@
--- Pepsi's Name Spoofer (UI Edition - Rivals Kill Log Supported)
--- ※「×」ボタンで閉じます。再表示は「Insert」キー。
--- ※Rivalsのキルログ（Kill Feed）の名前変更にも対応。
+-- Pepsi's Name Spoofer (Name Only - High Speed Edition - Rivals Supported)
+-- Settings
+
+local new_name = "KeiTomo." -- ここに変更したい名前を入力してください
+local rename_instances = true
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local CoreGui = game:GetService("CoreGui")
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-
--- 状態管理変数
-local new_name = ""
-local rename_instances = true
 local replaces_str = { LocalPlayer.Name }
 
--- UIの作成
-local ScreenGui = Instance.new("ScreenGui")
-local MainFrame = Instance.new("Frame")
-local TitleLabel = Instance.new("TextLabel")
-local NameInput = Instance.new("TextBox")
-local ApplyButton = Instance.new("TextButton")
-local CloseButton = Instance.new("TextButton")
+new_name = tostring(new_name)
 
--- UIの階層設定
-if syn and syn.protect_gui then
-    syn.protect_gui(ScreenGui)
-    ScreenGui.Parent = CoreGui
-elseif gethui then
-    ScreenGui.Parent = gethui()
-else
-    ScreenGui.Parent = CoreGui or PlayerGui
-end
-
-ScreenGui.Name = "NameSpooferUI"
-ScreenGui.ResetOnSpawn = false
-
--- メインフレームの設定
-MainFrame.Name = "MainFrame"
-MainFrame.Parent = ScreenGui
-MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
-MainFrame.Position = UDim2.new(0.5, -125, 0.5, -60)
-MainFrame.Size = UDim2.new(0, 250, 0, 120)
-MainFrame.Active = true
-MainFrame.Draggable = true
-
-local frameCorner = Instance.new("UICorner", MainFrame)
-frameCorner.CornerRadius = UDim.new(0, 8)
-
--- タイトル
-TitleLabel.Name = "TitleLabel"
-TitleLabel.Parent = MainFrame
-TitleLabel.BackgroundTransparency = 1
-TitleLabel.Position = UDim2.new(0, 10, 0, 5)
-TitleLabel.Size = UDim2.new(1, -40, 0, 25)
-TitleLabel.Font = Enum.Font.SourceSansBold
-TitleLabel.Text = "Name Spoofer (Rivals)"
-TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-TitleLabel.TextSize = 16
-TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
-
--- × ボタン
-CloseButton.Name = "CloseButton"
-CloseButton.Parent = MainFrame
-CloseButton.BackgroundTransparency = 1
-CloseButton.Position = UDim2.new(1, -30, 0, 5)
-CloseButton.Size = UDim2.new(0, 25, 0, 25)
-CloseButton.Font = Enum.Font.SourceSansBold
-CloseButton.Text = "×"
-CloseButton.TextColor3 = Color3.fromRGB(180, 180, 180)
-CloseButton.TextSize = 20
-
--- テキスト入力ボックス
-NameInput.Name = "NameInput"
-NameInput.Parent = MainFrame
-NameInput.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
-NameInput.Position = UDim2.new(0.05, 0, 0.3, 0)
-NameInput.Size = UDim2.new(0.9, 0, 0, 30)
-NameInput.Font = Enum.Font.SourceSans
-NameInput.PlaceholderText = "変更したい名前を入力..."
-NameInput.Text = ""
-NameInput.TextColor3 = Color3.fromRGB(255, 255, 255)
-NameInput.TextSize = 14
-
-local inputCorner = Instance.new("UICorner", NameInput)
-inputCorner.CornerRadius = UDim.new(0, 4)
-
--- 適用ボタン
-ApplyButton.Name = "ApplyButton"
-ApplyButton.Parent = MainFrame
-ApplyButton.BackgroundColor3 = Color3.fromRGB(0, 150, 100)
-ApplyButton.Position = UDim2.new(0.05, 0, 0.65, 0)
-ApplyButton.Size = UDim2.new(0.9, 0, 0, 30)
-ApplyButton.Font = Enum.Font.SourceSansBold
-ApplyButton.Text = "名前を変更 (Apply)"
-ApplyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-ApplyButton.TextSize = 14
-
-local buttonCorner = Instance.new("UICorner", ApplyButton)
-buttonCorner.CornerRadius = UDim.new(0, 4)
-
----------------------------------------------------------
--- スプーファーのロジックコア部分
----------------------------------------------------------
-
-local function casepatt(pattern)
-    return string.gsub(pattern, "(%%?)(.)", function(percent, letter)
-        if percent ~= "" or not string.match(letter, "%a") then
-            return percent .. letter
-        else
-            return string.format("[%s%s]", string.lower(letter), string.upper(letter))
-        end
+local function casepatt(pattern) 
+    return string.gsub(pattern, "(%%?)(.)", function(percent, letter) 
+        if percent ~= "" or not string.match(letter, "%a") then 
+            return percent .. letter 
+        else 
+            return string.format("[%s%s]", string.lower(letter), string.upper(letter)) 
+        end 
     end)
 end
 
--- 通常のGUIテキスト置換
-local function replace(item)
-    if new_name == "" then return end
-    
-    for _, v in pairs(replaces_str) do
-        for _, t in pairs({ "Text", "Message", "ToolTip", "Value" }) do
-            pcall(function()
-                if string.find(item[t], v, nil, true) then
-                    item[t] = string.gsub(item[t], v, new_name)
-                elseif string.find(item[t], string.lower(v), nil, true) then
-                    item[t] = string.gsub(item[t], string.lower(v), string.lower(new_name))
-                elseif string.find(item[t], string.upper(v), nil, true) then
-                    item[t] = string.gsub(item[t], string.upper(v), string.upper(new_name))
-                elseif string.find(string.lower(item[t]), string.lower(v), nil, true) then
-                    item[t] = string.gsub(item[t], casepatt(v), new_name)
-                end
-            end)
-        end
-        
-        if rename_instances then
-            pcall(function()
-                if string.find(item.Name, v, nil, true) then
-                    item.Name = string.gsub(item.Name, v, new_name)
-                elseif string.find(item.Name, string.lower(v), nil, true) then
-                    item.Name = string.gsub(item.Name, string.lower(v), string.lower(new_name))
-                elseif string.find(item.Name, string.upper(v), nil, true) then
-                    item.Name = string.gsub(item.Name, string.lower(v), string.upper(new_name))
-                elseif string.find(string.lower(item.Name), string.lower(v), nil, true) then
-                    item.Name = string.gsub(item.Name, casepatt(v), new_name)
-                end
-            end)
-        end
+function replace(item, fast) 
+    if not fast then RunService.RenderStepped:Wait() end 
+    for _, v in pairs(replaces_str) do 
+        for _, t in pairs({ "Text", "Message", "ToolTip", "Value" }) do 
+            pcall(function() 
+                if string.find(item[t], v, nil, true) then 
+                    item[t] = string.gsub(item[t], v, new_name) 
+                elseif string.find(item[t], string.lower(v), nil, true) then 
+                    item[t] = string.gsub(item[t], string.lower(v), string.lower(new_name)) -- item[v] のタイポを item[t] に修正
+                elseif string.find(item[t], string.upper(v), nil, true) then 
+                    item[t] = string.gsub(item[t], string.upper(v), string.upper(new_name)) -- item[v] のタイポを item[t] に修正
+                elseif string.find(string.lower(item[t]), string.lower(v), nil, true) then 
+                    item[t] = string.gsub(item[t], casepatt(v), new_name) -- item[v] のタイポを item[t] に修正
+                end 
+            end) 
+        end 
+        if rename_instances then 
+            pcall(function() 
+                if string.find(item.Name, v, nil, true) then 
+                    item.Name = string.gsub(item.Name, v, new_name) 
+                elseif string.find(item.Name, string.lower(v), nil, true) then 
+                    item.Name = string.gsub(item.Name, string.lower(v), string.lower(new_name)) 
+                elseif string.find(item.Name, string.upper(v), nil, true) then 
+                    item.Name = string.gsub(item.Name, string.lower(v), string.upper(new_name)) 
+                elseif string.find(string.lower(item.Name), string.lower(v), nil, true) then 
+                    item.Name = string.gsub(item.Name, casepatt(v), new_name) 
+                end 
+            end) 
+        end 
     end
 end
 
--- 【新規】Rivalsのキルログシステム専用ハック
+-- 【新規】Rivalsのキルログ（Kill Feed）配下のテキストラベルを全スキャンして置換する関数
 local function handleRivalsKillLog(child)
-    if new_name == "" then return end
-    
-    -- RivalsのキルログUI要素（KillFeed、Row、Templateなど）にあなたの名前が含まれているかチェック
+    for _, desc in ipairs(child:GetDescendants()) do
+        replace(desc, true)
+    end
     for _, v in pairs(replaces_str) do
-        -- 子要素すべての文字列（テキストラベルや属性値など）を網羅的に強制スキャンして上書き
-        for _, desc in ipairs(child:GetDescendants()) do
-            replace(desc)
-        end
-        
-        -- キルログのデータ属性やオブジェクト名自体に名前が組み込まれている場合も対応
         pcall(function()
             if string.find(child.Name, v, nil, true) then
                 child.Name = string.gsub(child.Name, v, new_name)
@@ -168,92 +69,60 @@ local function handleRivalsKillLog(child)
     end
 end
 
-local function scan_and_replace()
-    if new_name == "" then return end
-    local scan_que = { CoreGui:GetDescendants(), PlayerGui:GetDescendants(), workspace:GetDescendants() }
-    local last_break = 0
-    
-    for _, items in ipairs(scan_que) do
-        for _, gui in ipairs(items) do
-            last_break = 1 + last_break
-            if last_break >= 6000 then
-                RunService.RenderStepped:Wait()
-                last_break = 0
-            end
-            replace(gui)
-        end
+local function scan_and_replace(fast) 
+    local scan_que = { CoreGui:GetDescendants(), PlayerGui:GetDescendants(), workspace:GetDescendants() } 
+    local last_break = 0 
+    for _, items in ipairs(scan_que) do 
+        for _, gui in ipairs(items) do 
+            last_break = 1 + last_break 
+            if last_break >= 6000 then 
+                RunService.RenderStepped:Wait() 
+                last_break = 0 
+            end 
+            replace(gui, fast) 
+        end 
     end
 end
 
--- 画面へのUI追加を監視
+-- 新しく画面に文字やボタン（キルログ等含む）が追加された瞬間に自動で書き換える設定
 CoreGui.DescendantAdded:Connect(function(child)
-    replace(child)
+    replace(child, true)
     handleRivalsKillLog(child)
 end)
-
 PlayerGui.DescendantAdded:Connect(function(child)
-    replace(child)
+    replace(child, true)
     handleRivalsKillLog(child)
 end)
+workspace.DescendantAdded:Connect(function(child)
+    replace(child, true)
+end)
 
-workspace.DescendantAdded:Connect(replace)
+-- 初期スキャン(一括変更)
+scan_and_replace(true)
 
--- 毎フレームのループで常に自分の名前とキャラクター名の偽装を維持
-RunService.RenderStepped:Connect(function()
-    if new_name == "" then return end
+-- 超高速ループ(RenderSteppedに同期して毎フレーム名前を維持する)
+RunService.RenderStepped:Connect(function() 
+    if rename_instances then 
+        pcall(function() 
+            LocalPlayer.Name = new_name 
+            if LocalPlayer.Character then 
+                LocalPlayer.Character.Name = new_name 
+            end 
+        end) 
+    end 
+    -- 定期的な全体スキャンもバックグラウンドで並行実行 
+    pcall(replace, workspace, true)
     
-    if rename_instances then
-        pcall(function()
-            LocalPlayer.Name = new_name
-            if LocalPlayer.Character then
-                LocalPlayer.Character.Name = new_name
-            end
-        end)
-    end
-    pcall(replace, workspace)
-    
-    -- 【追加】地上のキルログフレームを毎フレーム常時監視して強制上書き
+    -- 【新規追加】Rivals用の常時キルログ監視。生成が一瞬遅れた要素も毎フレーム強制的に上書き
     pcall(function()
         for _, gui in ipairs(PlayerGui:GetDescendants()) do
             if string.find(string.lower(gui.Name), "kill") or string.find(string.lower(gui.Name), "feed") then
                 for _, textLabel in ipairs(gui:GetDescendants()) do
                     if textLabel:IsA("TextLabel") or textLabel:IsA("TextBox") then
-                        replace(textLabel)
+                        replace(textLabel, true)
                     end
                 end
             end
         end
     end)
-end)
-
--- UIボタンの処理
-ApplyButton.MouseButton1Click:Connect(function()
-    local input_text = NameInput.Text
-    if input_text and input_text ~= "" then
-        new_name = tostring(input_text)
-        ApplyButton.Text = "変更完了！"
-        ApplyButton.BackgroundColor3 = Color3.fromRGB(0, 120, 200)
-        
-        task.spawn(scan_and_replace)
-        
-        task.wait(1)
-        ApplyButton.Text = "名前を変更 (Apply)"
-        ApplyButton.BackgroundColor3 = Color3.fromRGB(0, 150, 100)
-    end
-end)
-
----------------------------------------------------------
--- インタラクション（閉じる・再表示）
----------------------------------------------------------
-CloseButton.MouseEnter:Connect(function() CloseButton.TextColor3 = Color3.fromRGB(255, 100, 100) end)
-CloseButton.MouseLeave:Connect(function() CloseButton.TextColor3 = Color3.fromRGB(180, 180, 180) end)
-
-CloseButton.MouseButton1Click:Connect(function()
-    MainFrame.Visible = false
-end)
-
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if not gameProcessed and input.KeyCode == Enum.KeyCode.Insert then
-        MainFrame.Visible = not MainFrame.Visible
-    end
 end)
